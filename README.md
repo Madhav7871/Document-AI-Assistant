@@ -99,7 +99,7 @@ frontend/
   `CHUNK_SIZE`/`CHUNK_OVERLAP` (in `ingest.py`) — smaller chunks are more
   precise, larger chunks keep more context together.
 - **Model:** change `GEMINI_MODEL` in `backend/.env` (defaults to
-  `gemini-2.5-flash`).
+  `gemini-1.5-flash`).
 - **Multiple PDFs:** loop `ingest.py`'s extraction over a folder of PDFs
   instead of a single file, and store the source filename alongside `page`
   in each chunk's metadata.

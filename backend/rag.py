@@ -22,8 +22,8 @@ EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
 INDEX_DIR = os.path.join(os.path.dirname(__file__), "index")
 TOP_K = 5
 
-# Fetch the model name from .env, defaulting to gemini-2.5-flash
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# Fetch the model name from .env, defaulting to gemini-1.5-flash
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 
 SYSTEM_PROMPT = """You are a friendly, helpful study assistant chatbot.
 You answer questions ONLY using the CONTEXT excerpts provided below, which
