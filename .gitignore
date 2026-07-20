@@ -1,0 +1,38 @@
+# =========================
+# Environment Variables
+# =========================
+# This ignores .env files anywhere in your project (backend and frontend)
+.env
+.env.local
+.env.*
+# We use ! to specifically ALLOW .env.example to be uploaded
+!.env.example
+
+# =========================
+# Backend (Python / FastAPI)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+
+# Ignore your specific data and vector database folders
+backend/data/
+backend/index/
+*.pdf
+
+# =========================
+# Frontend (React / Vite)
+# =========================
+node_modules/
+dist/
+dist-ssr/
+.eslintcache
+
+# =========================
+# OS / Misc
+# =========================
+.DS_Store
+Thumbs.db
