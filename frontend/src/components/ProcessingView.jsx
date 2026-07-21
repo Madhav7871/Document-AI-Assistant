@@ -34,7 +34,7 @@ export default function ProcessingView({ statusText, uploadProgress }) {
         }}
       >
         <source
-          src="/background/16458941-uhd_3840_2160_30fps.mp4"
+          src="/background/12823215_1920_1080_30fps.mp4"
           type="video/mp4"
         />
       </video>
