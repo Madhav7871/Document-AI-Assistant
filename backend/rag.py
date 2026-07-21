@@ -88,7 +88,7 @@ class RagEngine:
             parts.append(f"[Page {r['page']}{file_info}]\n{r['text']}")
         return "\n\n---\n\n".join(parts)
 
-    def answer(self, query: str, history: list | None = None):
+    def answer(self, query: str, history: list = None):
         history = history or []
         retrieved = self.retrieve(query)
         context = self._build_context(retrieved)
