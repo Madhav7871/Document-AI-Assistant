@@ -1,0 +1,44 @@
+/* Container for the whole row */
+.msg-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 5px;
+  justify-content: flex-start; /* Aligns bot to the left */
+}
+
+.msg-row--user {
+  justify-content: flex-end; /* Aligns user to the right */
+}
+
+/* The actual text bubble */
+.bubble {
+  max-width: 95%; /* Stretches the bubble extremely close to the edges */
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+/* User Bubble Styles */
+.bubble--user {
+  background: rgba(138, 106, 59, 0.2);
+  border: 1px solid rgba(180, 140, 80, 0.3);
+  color: #f3f4f6;
+  border-bottom-right-radius: 2px; /* Sharp corner pointing right */
+}
+
+/* AI/Bot Bubble Styles */
+.bubble--bot {
+  background: rgba(20, 25, 40, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: #e5e7eb;
+  border-bottom-left-radius: 2px; /* Sharp corner pointing left */
+}
+
+/* Error State */
+.bubble--error {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
