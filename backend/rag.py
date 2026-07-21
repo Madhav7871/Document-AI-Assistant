@@ -4,10 +4,12 @@ rag.py
 Loads the FAISS index built by ingest.py and exposes:
     - retrieve(query, k)   -> top-k relevant chunks
     - answer(query, history) -> a natural-language answer grounded in the PDF
+    - generate_quiz(difficulty, randomizer) -> generates 5 unique questions based on random document chunks
 """
 
 import json
 import os
+import random # <-- NEW IMPORT ADDED HERE FOR QUIZ VARIETY
 
 import faiss
 import google.generativeai as genai
@@ -113,3 +115,61 @@ class RagEngine:
 
         sources = sorted({r["page"] for r in retrieved})
         return {"answer": answer_text, "sources": sources}
+
+    # =========================================================================
+    # NEW METHOD ADDED BELOW FOR QUIZ GENERATION (DOES NOT AFFECT CHATBOT)
+    # =========================================================================
+    
+    def generate_quiz(self, difficulty: str, randomizer: int):
+        # 1. Grab 10 random chunks from the document to ensure variety every time
+        num_chunks = min(10, len(self.chunks))
+        random_chunks = random.sample(self.chunks, num_chunks)
+        context = self._build_context(random_chunks)
+
+        # 2. The Strict Prompt
+        prompt = f"""
+        You are an expert quiz generator. Based on the provided document text, generate exactly 5 multiple-choice questions.
+
+        Requested Difficulty Level: {difficulty}
+        Random Seed: {randomizer}
+
+        CRITICAL RULES YOU MUST FOLLOW:
+        1. QUANTITY: You MUST generate exactly 5 questions. No more, no less.
+        2. VARIETY: Focus on different parts of the text.
+        3. DIFFICULTY: 
+           - Easy: Basic definitions.
+           - Medium: Connecting ideas.
+           - Hard: Deep analysis and complex reasoning.
+        4. FORMAT: You MUST return a valid JSON array.
+
+        Each object must follow this exact structure:
+        [
+          {{
+            "question": "The question text",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correctAnswer": "The exact text of the correct option"
+          }}
+        ]
+
+        DOCUMENT TEXT:
+        {context}
+        """
+
+        # 3. Create a temporary model instance just for the quiz (ignores chatbot system prompt)
+        quiz_model = genai.GenerativeModel(model_name=GEMINI_MODEL)
+        
+        # 4. Call Gemini with Temperature 0.7 for creativity and force JSON output
+        response = quiz_model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.7,
+                response_mime_type="application/json", # Forces Gemini to output clean JSON
+            )
+        )
+
+        # 5. Parse and return the JSON directly
+        try:
+            return json.loads(response.text)
+        except Exception as e:
+            print("Error parsing JSON:", e)
+            return [] # Returns empty array if AI fails

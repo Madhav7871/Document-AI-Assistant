@@ -57,6 +57,15 @@ class ChatResponse(BaseModel):
     sources: list[int]
 
 
+# ==========================================
+# NEW: Data model for the quiz request
+# ==========================================
+class QuizRequest(BaseModel):
+    file: str
+    difficulty: str
+    randomizer: int
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "index_loaded": engine is not None}
@@ -103,3 +112,27 @@ def chat(req: ChatRequest):
     history = [turn.model_dump() for turn in req.history]
     result = engine.answer(req.message, history=history)
     return result
+
+
+# ==========================================
+# NEW: Route to handle quiz generation
+# ==========================================
+@app.post("/quiz")
+def generate_quiz(req: QuizRequest):
+    if engine is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Index not loaded. Please upload a PDF file first.",
+        )
+    
+    try:
+        # Calls the function we just added to rag.py
+        questions = engine.generate_quiz(req.difficulty, req.randomizer)
+        
+        # If the AI failed to generate proper JSON, it returns an empty array
+        if not questions:
+            raise HTTPException(status_code=500, detail="Failed to parse quiz from AI.")
+            
+        return questions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

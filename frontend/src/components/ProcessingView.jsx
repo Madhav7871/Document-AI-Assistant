@@ -13,38 +13,51 @@ export default function ProcessingView({
   statusText = "Reading PDF document...",
   uploadProgress = 0,
 }) {
-  // --- 1. Audio Ref from your original code ---
-  const audioRef = useRef(null);
+  // --- 1. Audio Refs ---
+  const audioRef = useRef(null); // For background music
+  const voiceRef = useRef(null); // NEW: For Maya's voice
 
   // --- 2. States for the new timer and facts ---
   const [factIndex, setFactIndex] = useState(0);
   const [startTime] = useState(Date.now());
   const [estimatedTimeLeft, setEstimatedTimeLeft] = useState(null);
 
-  // --- Effect 1: Audio Autoplay Hack (Original) ---
+  // --- Effect 1: Audio Autoplay Hack ---
   useEffect(() => {
+    // 1. Start background music
     if (audioRef.current) {
       audioRef.current.volume = 0.2;
-      // Try to play immediately since the user likely already interacted on the previous screen
       audioRef.current.play().catch((err) => {
-        console.log("Waiting for interaction to play audio", err);
+        console.log("Waiting for interaction to play bg music", err);
       });
     }
 
-    // Fallback click listener just in case it gets blocked
-    const startBackgroundAudio = () => {
+    // 2. Start Maya Voice Greeting
+    if (voiceRef.current) {
+      voiceRef.current.play().catch((err) => {
+        console.log("Waiting for interaction to play voice", err);
+      });
+    }
+
+    // Fallback click listener just in case it gets blocked by the browser
+    const startAudioFallback = () => {
       if (audioRef.current) {
-        audioRef.current.play().catch((err) => {
-          console.log("Browser still blocked audio:", err);
-        });
+        audioRef.current
+          .play()
+          .catch((err) => console.log("Bg music blocked:", err));
       }
-      document.removeEventListener("click", startBackgroundAudio);
+      if (voiceRef.current) {
+        voiceRef.current
+          .play()
+          .catch((err) => console.log("Voice blocked:", err));
+      }
+      document.removeEventListener("click", startAudioFallback);
     };
 
-    document.addEventListener("click", startBackgroundAudio);
+    document.addEventListener("click", startAudioFallback);
 
     return () => {
-      document.removeEventListener("click", startBackgroundAudio);
+      document.removeEventListener("click", startAudioFallback);
     };
   }, []);
 
@@ -129,7 +142,13 @@ export default function ProcessingView({
         />
       </video>
 
-      {/* Hidden Audio Element */}
+      {/* Hidden Audio Elements */}
+      {/* 1. The Voice Greeting (Plays Once) */}
+      <audio ref={voiceRef}>
+        <source src="/bg music/Processing-bg-audio.mp3" type="audio/mp3" />
+      </audio>
+
+      {/* 2. The Looping Background Music */}
       <audio ref={audioRef} loop>
         <source
           src="/bg music/the_mountain-documentary-light-153631.mp3"
