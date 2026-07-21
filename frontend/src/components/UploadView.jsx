@@ -66,8 +66,28 @@ export default function UploadView({ onFileUpload }) {
           hidden
         />
 
+        {/* Removed the nested <button>, keeping only the <label> as the button */}
         <label htmlFor="pdf-upload" className="upload-btn">
-          <span className="upload-btn__icon">📤</span> Choose a PDF File
+          <span className="upload-btn__icon">
+            {/* Modern 'FileUp' SVG Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M12 12v6" />
+              <path d="m15 15-3-3-3 3" />
+            </svg>
+          </span>
+          Choose a PDF File
         </label>
       </div>
     </div>

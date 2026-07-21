@@ -1,4 +1,36 @@
+import React, { useEffect, useRef } from "react";
+
 export default function ProcessingView({ statusText, uploadProgress }) {
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    // 1. Set the background volume low (20% volume)
+    if (audioRef.current) {
+      audioRef.current.volume = 0.2;
+
+      // Try to play immediately since the user likely already interacted on the previous screen
+      audioRef.current.play().catch((err) => {
+        console.log("Waiting for interaction to play audio", err);
+      });
+    }
+
+    // 2. Fallback click listener just in case it gets blocked
+    const startBackgroundAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.play().catch((err) => {
+          console.log("Browser still blocked audio:", err);
+        });
+      }
+      document.removeEventListener("click", startBackgroundAudio);
+    };
+
+    document.addEventListener("click", startBackgroundAudio);
+
+    return () => {
+      document.removeEventListener("click", startBackgroundAudio);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -38,6 +70,14 @@ export default function ProcessingView({ statusText, uploadProgress }) {
           type="video/mp4"
         />
       </video>
+
+      {/* Hidden Audio Element */}
+      <audio ref={audioRef} loop>
+        <source
+          src="/bg music/the_mountain-documentary-light-153631.mp3"
+          type="audio/mp3"
+        />
+      </audio>
 
       {/* Foreground Content */}
       <div
