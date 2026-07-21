@@ -9,7 +9,7 @@ Loads the FAISS index built by ingest.py and exposes:
 
 import json
 import os
-import random # <-- NEW IMPORT ADDED HERE FOR QUIZ VARIETY
+import random 
 
 import faiss
 import google.generativeai as genai
@@ -17,15 +17,16 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
+# Import the error types and your model list
+from google.api_core.exceptions import ResourceExhausted, InternalServerError
+from gemini_manager import GEMINI_MODELS
+
 # Load variables from .env file
 load_dotenv()
 
 EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
 INDEX_DIR = os.path.join(os.path.dirname(__file__), "index")
 TOP_K = 5
-
-# Fetch the model name from .env, defaulting to gemini-1.5-flash
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 
 SYSTEM_PROMPT = """You are a friendly, helpful study assistant chatbot.
 You answer questions ONLY using the CONTEXT excerpts provided below, which
@@ -63,10 +64,9 @@ class RagEngine:
             raise ValueError("API Key is missing! Please make sure GEMINI_API_KEY is set in your .env file.")
 
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL,
-            system_instruction=SYSTEM_PROMPT,
-        )
+        
+        # We no longer initialize a single self.model here, 
+        # because we will dynamically switch models in the fallback loops below.
 
     def retrieve(self, query: str, k: int = TOP_K):
         vec = self.embed_model.encode([query], convert_to_numpy=True).astype("float32")
@@ -98,30 +98,53 @@ class RagEngine:
             f"QUESTION: {query}"
         )
 
-        # Gemini's chat history uses role "model" instead of "assistant",
-        # and each turn's text goes inside a "parts" list.
+        # Gemini's chat history uses role "model" instead of "assistant"
         gemini_history = []
         for turn in history[-6:]:
             role = "model" if turn["role"] == "assistant" else "user"
             gemini_history.append({"role": role, "parts": [turn["content"]]})
 
-        chat = self.model.start_chat(history=gemini_history)
-        response = chat.send_message(
-            user_message,
-            generation_config=genai.types.GenerationConfig(max_output_tokens=1000),
-        )
+        answer_text = "Error: All Gemini models are currently overloaded. Please try again later."
 
-        answer_text = response.text
+        # ==========================================
+        # FALLBACK LOOP FOR CHATBOT
+        # ==========================================
+        for model_name in GEMINI_MODELS:
+            try:
+                print(f"💬 Chat: Attempting {model_name}...")
+                
+                # Initialize model with system prompt
+                model = genai.GenerativeModel(
+                    model_name=model_name,
+                    system_instruction=SYSTEM_PROMPT,
+                )
+                
+                chat = model.start_chat(history=gemini_history)
+                response = chat.send_message(
+                    user_message,
+                    generation_config=genai.types.GenerationConfig(max_output_tokens=1000),
+                )
+                
+                answer_text = response.text
+                print(f"✅ Chat: Success with {model_name}")
+                break  # Exit the loop on success!
+                
+            except (ResourceExhausted, InternalServerError) as e:
+                print(f"⚠️ {model_name} failed ({type(e).__name__}). Switching...")
+                continue
+            except Exception as e:
+                print(f"❌ {model_name} unexpected error: {e}. Switching...")
+                continue
 
         sources = sorted({r["page"] for r in retrieved})
         return {"answer": answer_text, "sources": sources}
 
     # =========================================================================
-    # NEW METHOD ADDED BELOW FOR QUIZ GENERATION (DOES NOT AFFECT CHATBOT)
+    # QUIZ GENERATION WITH FALLBACK
     # =========================================================================
     
     def generate_quiz(self, difficulty: str, randomizer: int):
-        # 1. Grab 10 random chunks from the document to ensure variety every time
+        # 1. Grab 10 random chunks from the document
         num_chunks = min(10, len(self.chunks))
         random_chunks = random.sample(self.chunks, num_chunks)
         context = self._build_context(random_chunks)
@@ -155,21 +178,38 @@ class RagEngine:
         {context}
         """
 
-        # 3. Create a temporary model instance just for the quiz (ignores chatbot system prompt)
-        quiz_model = genai.GenerativeModel(model_name=GEMINI_MODEL)
-        
-        # 4. Call Gemini with Temperature 0.7 for creativity and force JSON output
-        response = quiz_model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                response_mime_type="application/json", # Forces Gemini to output clean JSON
-            )
-        )
+        quiz_json = []
 
-        # 5. Parse and return the JSON directly
-        try:
-            return json.loads(response.text)
-        except Exception as e:
-            print("Error parsing JSON:", e)
-            return [] # Returns empty array if AI fails
+        # ==========================================
+        # FALLBACK LOOP FOR QUIZ
+        # ==========================================
+        for model_name in GEMINI_MODELS:
+            try:
+                print(f"📝 Quiz: Attempting {model_name}...")
+                
+                quiz_model = genai.GenerativeModel(model_name=model_name)
+                response = quiz_model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=0.7,
+                        response_mime_type="application/json", # Forces clean JSON
+                    )
+                )
+                
+                # Try to parse JSON immediately
+                quiz_json = json.loads(response.text)
+                print(f"✅ Quiz: Success with {model_name}")
+                break  # Exit the loop on success!
+
+            except (ResourceExhausted, InternalServerError) as e:
+                print(f"⚠️ {model_name} failed ({type(e).__name__}). Switching...")
+                continue
+            except json.JSONDecodeError:
+                print(f"⚠️ {model_name} failed to return valid JSON. Switching...")
+                continue
+            except Exception as e:
+                print(f"❌ {model_name} unexpected error: {e}. Switching...")
+                continue
+
+        # Returns the populated array or an empty array if all models fail
+        return quiz_json
