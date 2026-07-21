@@ -19,7 +19,7 @@
 }
 
 .quiz-glass-container {
-  /* CHANGED: Force it to take up the entire screen */
+  /* Force it to take up the entire screen */
   width: 100vw;
   max-width: 100vw;
   height: 100vh;
@@ -29,7 +29,7 @@
   background: rgba(15, 20, 30, 0.6);
   backdrop-filter: blur(16px);
 
-  /* REMOVED: borders and border-radius since it touches the edges now */
+  /* No borders since it touches the edges now */
   border: none;
   border-radius: 0;
 
@@ -37,11 +37,11 @@
   flex-direction: column;
   color: white;
 
-  /* You can increase padding if you want the text pushed further from the screen edges */
   padding: 4rem;
   overflow-y: auto;
 }
-/* ADDED: Custom styling to make the scrollbar match your dark glass theme */
+
+/* Custom styling to make the scrollbar match your dark glass theme */
 .quiz-glass-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -69,6 +69,7 @@
   margin-bottom: 2rem;
 }
 
+/* CHANGED: Larger buttons with thicker padding and bigger fonts */
 .back-btn,
 .start-btn,
 .next-btn,
@@ -76,10 +77,11 @@
   background: rgba(59, 130, 246, 0.8);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 16px 36px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 1.3rem;
   transition: all 0.2s;
 }
 
@@ -98,6 +100,16 @@
   transform: none;
 }
 
+/* ADDED: Limits the width of the content so it doesn't stretch too wide on huge monitors */
+.setup-panel,
+.loading-panel,
+.results-panel,
+.active-quiz-panel {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 /* Non-scrollable panels stay perfectly centered */
 .setup-panel,
 .loading-panel,
@@ -110,7 +122,7 @@
   text-align: center;
 }
 
-/* CHANGED: Active quiz panel starts at top to prevent top text cutoff when scrolling */
+/* Active quiz panel starts at top to prevent top text cutoff when scrolling */
 .active-quiz-panel {
   display: flex;
   flex-direction: column;
@@ -118,7 +130,16 @@
   justify-content: flex-start;
   min-height: 100%;
   text-align: center;
-  padding-bottom: 1rem; /* Ensures the Next button doesn't touch the bottom */
+  padding-bottom: 1rem;
+}
+
+/* ADDED: Massive font size for the setup headers */
+.setup-panel h2,
+.setup-panel h3 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .difficulty-options {
@@ -127,13 +148,17 @@
   margin: 2rem 0;
 }
 
+/* CHANGED: Wider difficulty buttons with slightly thicker text */
 .diff-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 12px 24px;
+  padding: 16px 48px;
   border-radius: 12px;
   cursor: pointer;
+  font-size: 1.25rem;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .diff-btn.active {
@@ -149,13 +174,14 @@
   margin: 2rem 0;
 }
 
+/* CHANGED: Bumped up option text size slightly so it's readable full-screen */
 .option-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1rem;
+  padding: 1.2rem;
   border-radius: 8px;
   color: white;
-  font-size: 1rem;
+  font-size: 1.15rem;
   cursor: pointer;
   transition: 0.2s;
   text-align: left;
