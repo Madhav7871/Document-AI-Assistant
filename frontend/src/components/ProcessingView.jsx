@@ -1,20 +1,37 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import "/src/ProcessingView.css";
 
-export default function ProcessingView({ statusText, uploadProgress }) {
+const AI_FACTS = [
+  "AI is analyzing your document structure...",
+  "Extracting key concepts and entities...",
+  "Chunking text to optimize search accuracy...",
+  "Preparing the vector database for your queries...",
+  "Almost ready! Connecting the final dots...",
+];
+
+export default function ProcessingView({
+  statusText = "Reading PDF document...",
+  uploadProgress = 0,
+}) {
+  // --- 1. Audio Ref from your original code ---
   const audioRef = useRef(null);
 
+  // --- 2. States for the new timer and facts ---
+  const [factIndex, setFactIndex] = useState(0);
+  const [startTime] = useState(Date.now());
+  const [estimatedTimeLeft, setEstimatedTimeLeft] = useState(null);
+
+  // --- Effect 1: Audio Autoplay Hack (Original) ---
   useEffect(() => {
-    // 1. Set the background volume low (20% volume)
     if (audioRef.current) {
       audioRef.current.volume = 0.2;
-
       // Try to play immediately since the user likely already interacted on the previous screen
       audioRef.current.play().catch((err) => {
         console.log("Waiting for interaction to play audio", err);
       });
     }
 
-    // 2. Fallback click listener just in case it gets blocked
+    // Fallback click listener just in case it gets blocked
     const startBackgroundAudio = () => {
       if (audioRef.current) {
         audioRef.current.play().catch((err) => {
@@ -31,23 +48,64 @@ export default function ProcessingView({ statusText, uploadProgress }) {
     };
   }, []);
 
+  // --- Effect 2: Rotate interesting facts every 6.5 seconds ---
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFactIndex((prev) => (prev + 1) % AI_FACTS.length);
+    }, 6500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- Effect 3: Calculate accurate remaining time based on current progress speed ---
+  useEffect(() => {
+    if (uploadProgress > 0 && uploadProgress < 100) {
+      const elapsedTimeInSeconds = (Date.now() - startTime) / 1000;
+
+      // Math: If 10% took 5 seconds, 100% takes 50 seconds.
+      const totalEstimatedTime = elapsedTimeInSeconds / (uploadProgress / 100);
+      const timeLeft = totalEstimatedTime - elapsedTimeInSeconds;
+
+      setEstimatedTimeLeft(Math.max(0, Math.ceil(timeLeft)));
+    } else if (uploadProgress === 100) {
+      setEstimatedTimeLeft(0);
+    }
+  }, [uploadProgress, startTime]);
+
+  // --- Effect 4: Real-time countdown tick ---
+  useEffect(() => {
+    // Don't run the tick if it's finished
+    if (uploadProgress === 100) return;
+
+    const timerId = setInterval(() => {
+      setEstimatedTimeLeft((prev) => {
+        // If we haven't calculated a time yet, or it's already 0, do nothing
+        if (prev === null || prev <= 0) return prev;
+        // Otherwise, tick down by 1 second
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Cleanup the interval when component unmounts or progress updates
+    return () => clearInterval(timerId);
+  }, [uploadProgress]);
+
+  // Format the seconds into a readable string
+  const formatTime = (seconds) => {
+    if (seconds === null) return "Calculating time...";
+    if (seconds <= 0) return "Almost done...";
+
+    if (seconds < 60) return `${seconds}s remaining`;
+
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    // Pad the seconds with a leading zero if needed (e.g., 1m 05s)
+    const paddedSecs = secs.toString().padStart(2, "0");
+
+    return `${mins}m ${paddedSecs}s remaining`;
+  };
+
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        minHeight: "100vh",
-        width: "100vw",
-        margin: 0,
-        padding: "2rem",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}
-    >
+    <div className="processing-wrapper">
       {/* Background Video */}
       <video
         autoPlay
@@ -79,55 +137,53 @@ export default function ProcessingView({ statusText, uploadProgress }) {
         />
       </audio>
 
-      {/* Foreground Content */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          width: "100%",
-          maxWidth: "500px",
-        }}
-      >
-        <h2
-          style={{ marginBottom: "2rem", color: "#ffffff", fontSize: "2rem" }}
-        >
-          Processing Document...
-        </h2>
+      {/* The sleek, frosted-glass processing card */}
+      <div className="processing-card" style={{ zIndex: 1 }}>
+        <h2 className="processing-card__title">Processing Document...</h2>
 
-        <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "10px",
-              fontSize: "1rem",
-              color: "#e5e7eb",
-              fontWeight: "500",
-            }}
-          >
-            <span>{statusText}</span>
-            <span>{uploadProgress}%</span>
+        {/* Progress Bar Section */}
+        <div className="progress-container">
+          <div className="progress-stats">
+            <span className="status-text">{statusText}</span>
+            <span className="percentage-text">{uploadProgress}%</span>
           </div>
 
-          <div
-            style={{
-              width: "100%",
-              height: "16px",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              borderRadius: "8px",
-              overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
-          >
+          <div className="progress-bar-background">
             <div
-              style={{
-                width: `${uploadProgress}%`,
-                height: "100%",
-                backgroundColor: "#3b82f6",
-                transition: "width 0.3s ease",
-                boxShadow: "0 0 10px rgba(59, 130, 246, 0.8)",
-              }}
-            />
+              className="progress-bar-fill"
+              style={{ width: `${uploadProgress}%` }}
+            >
+              {/* Optional: Adds a cool glowing effect at the tip of the loading bar */}
+              <div className="progress-bar-glow"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Extras: Timer and Facts */}
+        <div className="processing-extras">
+          <div className="timer-badge">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="timer-icon"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            {formatTime(estimatedTimeLeft)}
+          </div>
+
+          <div className="fact-box">
+            <p className="fact-text" key={factIndex}>
+              {AI_FACTS[factIndex]}
+            </p>
           </div>
         </div>
       </div>
