@@ -13,12 +13,15 @@ load_dotenv()
 from ingest import rebuild_index_progress  # noqa: E402
 from rag import RagEngine  # noqa: E402
 
-app = FastAPI(title="Document AI Chatbot")
+app = FastAPI(title="Document AI Chatbot (Local)")
 
-# 🚨 YAHAN FIX KIYA HAI: allow_origins=["*"] kar diya taaki Fetch Error na aaye
+# 🚨 Sirf Localhost Frontend (Vite) ko allow kiya hai
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,52 +29,44 @@ app.add_middleware(
 
 engine: RagEngine | None = None
 
-
 def reload_rag_engine():
     global engine
     try:
         engine = RagEngine()
-        print("✅ RagEngine successfully reloaded.")
+        print("✅ RagEngine successfully reloaded on Local Machine.")
     except Exception as e:
         print(f"⚠️ [engine loading warning] {e}")
         engine = None
-
 
 @app.on_event("startup")
 def load_engine():
     reload_rag_engine()
 
-
 class ChatTurn(BaseModel):
     role: str
     content: str
-
 
 class ChatRequest(BaseModel):
     message: str
     history: list[ChatTurn] = []
 
-
 class ChatResponse(BaseModel):
     answer: str
     sources: list[int]
-
 
 class QuizRequest(BaseModel):
     file: str
     difficulty: str
     randomizer: int
 
-
+# Local Health Check
 @app.get("/")
 def read_root():
-    return {"message": "Server is running"}
-
+    return {"message": "Local Server is running smoothly!"}
 
 @app.get("/health")
 def health():
     return {"status": "ok", "index_loaded": engine is not None}
-
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -80,6 +75,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     data_dir = "data"
 
+    # Clear old PDFs
     if os.path.exists(data_dir):
         for filename in os.listdir(data_dir):
             file_to_delete = os.path.join(data_dir, filename)
@@ -99,7 +95,6 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
-
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     if engine is None:
@@ -113,7 +108,6 @@ def chat(req: ChatRequest):
     history = [turn.model_dump() for turn in req.history]
     result = engine.answer(req.message, history=history)
     return result
-
 
 @app.post("/quiz")
 def generate_quiz(req: QuizRequest):
