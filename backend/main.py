@@ -66,6 +66,14 @@ class QuizRequest(BaseModel):
     randomizer: int
 
 
+# ==========================================
+# Health Check Endpoint for Render Root Path
+# ==========================================
+@app.get("/")
+def read_root():
+    return {"message": "Server is running"}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "index_loaded": engine is not None}
