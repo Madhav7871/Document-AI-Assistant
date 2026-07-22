@@ -15,15 +15,10 @@ from rag import RagEngine  # noqa: E402
 
 app = FastAPI(title="Document AI Chatbot")
 
-CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5173")
+# 🚨 YAHAN FIX KIYA HAI: allow_origins=["*"] kar diya taaki Fetch Error na aaye
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        CORS_ORIGIN, 
-        "http://localhost:5173", 
-        "http://127.0.0.1:5173",
-        "https://noteslearning-eight.vercel.app"
-    ],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,18 +57,12 @@ class ChatResponse(BaseModel):
     sources: list[int]
 
 
-# ==========================================
-# NEW: Data model for the quiz request
-# ==========================================
 class QuizRequest(BaseModel):
     file: str
     difficulty: str
     randomizer: int
 
 
-# ==========================================
-# Health Check Endpoint for Render Root Path
-# ==========================================
 @app.get("/")
 def read_root():
     return {"message": "Server is running"}
@@ -91,7 +80,6 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     data_dir = "data"
 
-    # Clear old PDFs
     if os.path.exists(data_dir):
         for filename in os.listdir(data_dir):
             file_to_delete = os.path.join(data_dir, filename)
@@ -127,9 +115,6 @@ def chat(req: ChatRequest):
     return result
 
 
-# ==========================================
-# NEW: Route to handle quiz generation
-# ==========================================
 @app.post("/quiz")
 def generate_quiz(req: QuizRequest):
     if engine is None:
@@ -139,10 +124,8 @@ def generate_quiz(req: QuizRequest):
         )
     
     try:
-        # Calls the function we just added to rag.py
         questions = engine.generate_quiz(req.difficulty, req.randomizer)
         
-        # If the AI failed to generate proper JSON, it returns an empty array
         if not questions:
             raise HTTPException(status_code=500, detail="Failed to parse quiz from AI.")
             
