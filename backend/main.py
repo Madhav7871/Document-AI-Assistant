@@ -18,7 +18,12 @@ app = FastAPI(title="Document AI Chatbot")
 CORS_ORIGIN = os.getenv("CORS_ORIGIN", "http://localhost:5173")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[CORS_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        CORS_ORIGIN, 
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "https://noteslearning-eight.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
