@@ -3,11 +3,12 @@ import UploadView from "./components/UploadView.jsx";
 import ProcessingView from "./components/ProcessingView.jsx";
 import ChatView from "./components/ChatView.jsx";
 import QuizView from "./components/QuizView.jsx";
+import VoiceAssistantView from "./components/VoiceAssistantView.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function App() {
-  const [currentView, setCurrentView] = useState("UPLOAD"); // "UPLOAD", "PROCESSING", "CHAT", or "QUIZ"
+  const [currentView, setCurrentView] = useState("UPLOAD"); // "UPLOAD", "PROCESSING", "CHAT", "QUIZ", or "VOICE"
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -117,6 +118,8 @@ export default function App() {
     }
   };
 
+  // --- VIEW ROUTING ---
+
   if (currentView === "UPLOAD") {
     return <UploadView onFileUpload={handleFileUpload} />;
   }
@@ -127,63 +130,122 @@ export default function App() {
     );
   }
 
-  // 1. ADDED: Render the QuizView when state is set to "QUIZ"
   if (currentView === "QUIZ") {
     return (
-      <QuizView
+      <QuizView activeFile={activeFile} onBack={() => setCurrentView("CHAT")} />
+    );
+  }
+
+  if (currentView === "VOICE") {
+    return (
+      <VoiceAssistantView
         activeFile={activeFile}
-        onBack={() => setCurrentView("CHAT")} // Pass function to let user return to chat
+        onBack={() => setCurrentView("CHAT")}
       />
     );
   }
 
-  // 2. MODIFIED: Wrap ChatView in a fragment (<>...</>) to add the floating Quiz button
+  // --- DEFAULT (CHAT) VIEW ---
   return (
     <>
-      <button
-        onClick={() => setCurrentView("QUIZ")}
+      {/* 
+        Container for the extra header buttons. 
+        Placed at right: 210px to leave room for your "Return to Home" button.
+      */}
+      <div
         style={{
           position: "absolute",
           top: "32px",
           right: "210px",
           zIndex: 100,
           display: "flex",
-          alignItems: "center",
-          gap: "8px", // Space between icon and text
-          padding: "8px 16px", // Matched sizing
-          backgroundColor: "transparent", // Matched transparent background
-          color: "#e2e8f0",
-          border: "1px solid rgba(255, 255, 255, 0.2)", // Matched border visibility
-          borderRadius: "8px",
-          cursor: "pointer",
-          fontWeight: "400", // Matched lighter font weight
-          fontSize: "14px",
-          backdropFilter: "blur(10px)",
-          transition: "all 0.2s ease",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
+          gap: "12px",
         }}
       >
-        {/* Simple SVG icon to match the Home icon layout */}
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        {/* Voice Assistant Button */}
+        <button
+          onClick={() => setCurrentView("VOICE")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            backgroundColor: "transparent",
+            color: "#e2e8f0",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "400",
+            fontSize: "14px",
+            backdropFilter: "blur(10px)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
         >
-          <path d="M9 11l3 3L22 4"></path>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-        </svg>
-        Take a Quiz
-      </button>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          Voice Assistant
+        </button>
+
+        {/* Quiz Button */}
+        <button
+          onClick={() => setCurrentView("QUIZ")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            backgroundColor: "transparent",
+            color: "#e2e8f0",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "400",
+            fontSize: "14px",
+            backdropFilter: "blur(10px)",
+            transition: "all 0.2s ease",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+          Take a Quiz
+        </button>
+      </div>
 
       <ChatView
         activeFile={activeFile}

@@ -1,12 +1,13 @@
 import json
 import os
 import shutil
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ from rag import RagEngine  # noqa: E402
 
 app = FastAPI(title="Document AI Chatbot (Local)")
 
-# 🚨 Sirf Localhost Frontend (Vite) ko allow kiya hai
+# Frontend CORS Configuration (Vite React app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,7 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-engine: RagEngine | None = None
+engine: Optional[RagEngine] = None
+
 
 def reload_rag_engine():
     global engine
@@ -38,36 +40,52 @@ def reload_rag_engine():
         print(f"⚠️ [engine loading warning] {e}")
         engine = None
 
+
 @app.on_event("startup")
 def load_engine():
     reload_rag_engine()
 
+
+# Data Models
 class ChatTurn(BaseModel):
     role: str
     content: str
 
+
 class ChatRequest(BaseModel):
-    message: str
+    message: Optional[str] = None
+    question: Optional[str] = None  # Added support for 'question' key from voice frontend
     history: list[ChatTurn] = []
+
+    def get_query(self) -> str:
+        """Helper to extract query regardless of key used in request."""
+        query = self.message or self.question
+        return query.strip() if query else ""
+
 
 class ChatResponse(BaseModel):
     answer: str
     sources: list[int]
+
 
 class QuizRequest(BaseModel):
     file: str
     difficulty: str
     randomizer: int
 
-# Local Health Check
+
+# Health Check Endpoints
 @app.get("/")
 def read_root():
     return {"message": "Local Server is running smoothly!"}
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "index_loaded": engine is not None}
 
+
+# PDF Upload & Indexing Endpoint
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
@@ -75,7 +93,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     data_dir = "data"
 
-    # Clear old PDFs
+    # Clear old uploaded PDFs
     if os.path.exists(data_dir):
         for filename in os.listdir(data_dir):
             file_to_delete = os.path.join(data_dir, filename)
@@ -95,6 +113,8 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
+
+# Chat / Voice Assistant Endpoint
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     if engine is None:
@@ -102,13 +122,21 @@ def chat(req: ChatRequest):
             status_code=503,
             detail="Index not loaded. Please upload a PDF file first.",
         )
-    if not req.message.strip():
-        raise HTTPException(status_code=400, detail="message cannot be empty")
+    
+    user_query = req.get_query()
+    if not user_query:
+        raise HTTPException(status_code=400, detail="Message/Question cannot be empty.")
 
     history = [turn.model_dump() for turn in req.history]
-    result = engine.answer(req.message, history=history)
-    return result
+    
+    try:
+        result = engine.answer(user_query, history=history)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating answer: {str(e)}")
 
+
+# Quiz Generation Endpoint
 @app.post("/quiz")
 def generate_quiz(req: QuizRequest):
     if engine is None:
