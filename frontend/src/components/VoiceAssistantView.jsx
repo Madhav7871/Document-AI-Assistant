@@ -2,24 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import "../VoiceAssistant.css";
 
 const VoiceAssistantView = ({ activeFile, onBack }) => {
-  const [micState, setMicState] = useState("idle"); // "idle", "standby", "listening", "processing", "speaking"
+  // Removed "standby" - now it's just idle, listening, processing, speaking
+  const [micState, setMicState] = useState("idle");
   const [transcript, setTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
 
-  // Reference to hold the SpeechRecognition instance
   const recognitionRef = useRef(null);
 
-  // Generate the wake word by removing the .pdf extension and making it lowercase
-  const wakeWord = activeFile
-    ? activeFile.replace(/\.[^/.]+$/, "").toLowerCase()
-    : "assistant";
+  // Use the same API URL logic as your App.jsx
+  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true; // Needs to be continuous for standby mode
+      recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = "en-US";
 
@@ -28,19 +26,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           currentTranscript += event.results[i][0].transcript;
         }
-
-        const lowerTranscript = currentTranscript.toLowerCase();
         setTranscript(currentTranscript);
-
-        // --- WAKE WORD LOGIC ---
-        // If we are in standby mode and the user says the document name
-        if (micState === "standby" && lowerTranscript.includes(wakeWord)) {
-          setMicState("listening");
-          setTranscript(""); // Clear transcript to start fresh for the actual query
-          console.log(
-            `Wake word '${wakeWord}' detected! Listening for query...`,
-          );
-        }
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -51,31 +37,28 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
       };
 
       recognitionRef.current.onend = () => {
-        // If it stops but we are still supposed to be listening/standby, restart it
-        if (micState === "standby" || micState === "listening") {
+        // Keep listening if we are still in the listening state
+        if (micState === "listening") {
           try {
             recognitionRef.current.start();
-          } catch (e) {
-            // Ignore errors if it's already started
-          }
+          } catch (e) {}
         }
       };
     } else {
       console.warn("Speech Recognition API is not supported in this browser.");
     }
-  }, [micState, wakeWord]);
+  }, [micState]);
 
-  // Handle the state transitions when the button is clicked
   const toggleListen = () => {
     if (micState === "idle" || micState === "speaking") {
-      setMicState("standby");
+      setMicState("listening");
       setTranscript("");
       setAiResponse("");
       try {
         recognitionRef.current.start();
       } catch (e) {}
     } else if (micState === "listening") {
-      // Manual trigger to send the query if they don't want to wait
+      // Manual trigger if user clicks again while listening
       handleSendQuery(transcript);
     } else {
       setMicState("idle");
@@ -83,13 +66,13 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     }
   };
 
-  // Automatically send query when user stops talking (simulated via timeout)
+  // Automatically send query when user stops talking (2 seconds of silence)
   useEffect(() => {
     let timeoutId;
     if (micState === "listening" && transcript.trim() !== "") {
       timeoutId = setTimeout(() => {
         handleSendQuery(transcript);
-      }, 2000); // Wait 2 seconds of silence before sending
+      }, 2000);
     }
     return () => clearTimeout(timeoutId);
   }, [transcript, micState]);
@@ -101,12 +84,19 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     recognitionRef.current.stop();
 
     try {
-      // Replace with your actual FastAPI endpoint for RAG queries
-      const response = await fetch("http://localhost:8000/api/chat", {
+      // FIXED: Sending to /chat with the correct JSON format (message and history)
+      const response = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: queryText }),
+        body: JSON.stringify({
+          message: queryText,
+          history: [], // Passing empty history for voice queries to keep it simple
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Server responded with an error");
+      }
 
       const data = await response.json();
       const answer =
@@ -132,13 +122,14 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
       utterance.rate = 1.0;
 
       utterance.onend = () => {
-        setMicState("idle"); // Return to idle when done speaking
+        setMicState("idle");
       };
 
       window.speechSynthesis.speak(utterance);
     }
   };
 
+  // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -148,7 +139,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
 
   return (
     <div className="voice-assistant-container">
-      {/* Back Button */}
       <button className="back-to-chat-btn" onClick={onBack}>
         <svg
           width="18"
@@ -168,8 +158,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
 
       <h2>🎙️ Voice Assistant</h2>
       <p className="subtitle">
-        Click to enter Standby mode. Say <strong>"{wakeWord}"</strong> to
-        activate, then ask your question.
+        Click the microphone to start, then ask your question.
       </p>
 
       <div className="mic-wrapper">
@@ -189,10 +178,8 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
       </div>
 
       <div className="status-text">
-        {micState === "standby" && (
-          <p className="pulse-text-blue">
-            Waiting for wake word: "{wakeWord}"...
-          </p>
+        {micState === "idle" && (
+          <p className="pulse-text-gray">Click the mic to start</p>
         )}
         {micState === "listening" && (
           <p className="pulse-text-green">Listening to your question...</p>
