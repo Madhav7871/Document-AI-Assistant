@@ -2,20 +2,29 @@ import React, { useState, useEffect, useRef } from "react";
 import "../VoiceAssistant.css";
 
 const VoiceAssistantView = ({ activeFile, onBack }) => {
-  const [micState, setMicState] = useState("idle"); // "idle", "listening", "processing", "speaking"
+  const [micState, setMicState] = useState("idle");
   const [transcript, setTranscript] = useState("");
   const [aiResponse, setAiResponse] = useState("");
 
   const recognitionRef = useRef(null);
-  const stateRef = useRef("idle"); // Prevents stale state bugs in event listeners
+  const stateRef = useRef("idle");
   const timeoutRef = useRef(null);
+
+  // NEW: Ref to handle automatic scrolling
+  const transcriptEndRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-  // Keep stateRef synced with micState
   useEffect(() => {
     stateRef.current = micState;
   }, [micState]);
+
+  // NEW: Auto-scroll to bottom whenever transcript or response updates
+  useEffect(() => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [transcript, aiResponse]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -27,7 +36,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
       recognitionRef.current.lang = "en-US";
 
       recognitionRef.current.onresult = (event) => {
-        // If we are supposed to be processing or speaking, IGNORE microphone input completely
         if (stateRef.current !== "listening") return;
 
         let currentTranscript = "";
@@ -36,14 +44,13 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         }
         setTranscript(currentTranscript);
 
-        // Reset the silence timeout every time speech is detected
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         timeoutRef.current = setTimeout(() => {
           if (currentTranscript.trim() !== "") {
             handleSendQuery(currentTranscript);
           }
-        }, 1500); // 1.5 seconds of silence triggers the send
+        }, 1500);
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -52,8 +59,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
       };
 
       recognitionRef.current.onend = () => {
-        // ONLY auto-restart if we explicitly want to be listening.
-        // This completely prevents the feedback loop issue.
         if (stateRef.current === "listening") {
           try {
             recognitionRef.current.start();
@@ -71,9 +76,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
 
   const toggleListen = () => {
     if (micState === "idle" || micState === "speaking") {
-      // Stop any ongoing speech instantly
       window.speechSynthesis.cancel();
-
       setMicState("listening");
       setTranscript("");
       setAiResponse("");
@@ -81,7 +84,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         recognitionRef.current.start();
       } catch (e) {}
     } else if (micState === "listening") {
-      // Manual force send
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (transcript.trim()) handleSendQuery(transcript);
       else setMicState("idle");
@@ -91,9 +93,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
   const handleSendQuery = async (queryText) => {
     if (!queryText.trim()) return;
 
-    // 1. Instantly lock the state
     setMicState("processing");
-    // 2. FORCE abort the microphone immediately so it cannot hear the AI
     if (recognitionRef.current) {
       recognitionRef.current.abort();
     }
@@ -128,10 +128,9 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
   const speakText = (text) => {
     if (!("speechSynthesis" in window)) return;
 
-    window.speechSynthesis.cancel(); // Clear queue
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
 
-    // Find a better sounding voice if available
     const voices = window.speechSynthesis.getVoices();
     const preferredVoice = voices.find(
       (v) =>
@@ -149,14 +148,12 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     };
 
     utterance.onend = () => {
-      // When done speaking, return to idle. Wait for user to click to talk again.
       setMicState("idle");
     };
 
     window.speechSynthesis.speak(utterance);
   };
 
-  // Ensure voices are loaded (some browsers load them asynchronously)
   useEffect(() => {
     window.speechSynthesis.onvoiceschanged = () =>
       window.speechSynthesis.getVoices();
@@ -167,7 +164,17 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
   }, []);
 
   return (
-    <div className="voice-assistant-wrapper">
+    <div className="voice-assistant-container">
+      {/* Background Video Layer */}
+      <video className="bg-video" autoPlay loop muted playsInline>
+        <source
+          src="/background/12823215_1920_1080_30fps.mp4"
+          type="video/mp4"
+        />
+      </video>
+      <div className="bg-overlay"></div>
+
+      {/* Moved Button outside the center wrapper for absolute positioning */}
       <button className="back-to-chat-btn" onClick={onBack}>
         <svg
           width="18"
@@ -185,65 +192,68 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         Return to Chat
       </button>
 
-      <div className="voice-assistant-card">
-        <div className="voice-header">
-          <h2>🎙️ AI Voice Assistant</h2>
-          <p className="subtitle">Tap the microphone and start speaking</p>
-        </div>
+      <div className="voice-assistant-wrapper content-layer">
+        <div className="voice-assistant-card glass-card">
+          <div className="voice-header">
+            <h2>🎙️ AI Voice Assistant</h2>
+            <p className="subtitle">Tap the microphone and start speaking</p>
+          </div>
 
-        <div className="mic-display-area">
-          {/* Animated visualizer rings */}
-          <div className={`mic-ring ring-1 ${micState}`}></div>
-          <div className={`mic-ring ring-2 ${micState}`}></div>
+          <div className="mic-display-area">
+            <div className={`mic-ring ring-1 ${micState}`}></div>
+            <div className={`mic-ring ring-2 ${micState}`}></div>
 
-          <button
-            className={`mic-button ${micState}`}
-            onClick={toggleListen}
-            disabled={micState === "processing"}
-          >
-            {micState === "processing" ? (
-              <span className="spinner">⏳</span>
-            ) : micState === "speaking" ? (
-              <span className="speaker-icon">🔊</span>
-            ) : (
-              <span className="mic-icon">🎤</span>
+            <button
+              className={`mic-button ${micState}`}
+              onClick={toggleListen}
+              disabled={micState === "processing"}
+            >
+              {micState === "processing" ? (
+                <span className="spinner">⏳</span>
+              ) : micState === "speaking" ? (
+                <span className="speaker-icon">🔊</span>
+              ) : (
+                <span className="mic-icon">🎤</span>
+              )}
+            </button>
+          </div>
+
+          <div className="status-indicator">
+            {micState === "idle" && (
+              <span className="badge badge-gray">Tap to speak</span>
             )}
-          </button>
-        </div>
+            {micState === "listening" && (
+              <span className="badge badge-green">Listening...</span>
+            )}
+            {micState === "processing" && (
+              <span className="badge badge-blue">Thinking...</span>
+            )}
+            {micState === "speaking" && (
+              <span className="badge badge-purple">Answering</span>
+            )}
+          </div>
 
-        <div className="status-indicator">
-          {micState === "idle" && (
-            <span className="badge badge-gray">Tap to speak</span>
-          )}
-          {micState === "listening" && (
-            <span className="badge badge-green">Listening...</span>
-          )}
-          {micState === "processing" && (
-            <span className="badge badge-blue">Thinking...</span>
-          )}
-          {micState === "speaking" && (
-            <span className="badge badge-purple">Answering</span>
-          )}
-        </div>
-
-        <div className="transcript-area">
-          {transcript && (
-            <div className="message user-message">
-              <div className="message-label">You</div>
-              <div className="message-content">{transcript}</div>
-            </div>
-          )}
-          {aiResponse && (
-            <div className="message ai-message">
-              <div className="message-label">Assistant</div>
-              <div className="message-content">{aiResponse}</div>
-            </div>
-          )}
-          {!transcript && !aiResponse && (
-            <div className="empty-state">
-              Your conversation will appear here...
-            </div>
-          )}
+          <div className="transcript-area">
+            {transcript && (
+              <div className="message user-message">
+                <div className="message-label">You</div>
+                <div className="message-content">{transcript}</div>
+              </div>
+            )}
+            {aiResponse && (
+              <div className="message ai-message">
+                <div className="message-label">Assistant</div>
+                <div className="message-content">{aiResponse}</div>
+              </div>
+            )}
+            {!transcript && !aiResponse && (
+              <div className="empty-state">
+                Your conversation will appear here...
+              </div>
+            )}
+            {/* NEW: Invisible div to force scroll to bottom */}
+            <div ref={transcriptEndRef} />
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,43 @@
-/* VoiceAssistant.css - Premium UI */
+/* --- Background Video & Layout Containers --- */
+.voice-assistant-container {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.bg-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(
+    10,
+    15,
+    29,
+    0.7
+  ); /* Deep dark overlay for text readability */
+  z-index: 1;
+}
+
+/* --- Premium UI - Main Wrapper --- */
 .voice-assistant-wrapper {
+  position: relative;
+  z-index: 2; /* Keeps UI above the video */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,8 +47,13 @@
   margin: 0 auto;
 }
 
+/* --- Repositioned Back Button --- */
 .back-to-chat-btn {
-  align-self: flex-start;
+  /* Locks button to the top left of the screen */
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -23,7 +66,6 @@
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  margin-bottom: 24px;
   backdrop-filter: blur(10px);
 }
 
@@ -225,17 +267,43 @@
   border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
-/* --- Transcript Area --- */
+/* --- Transcript Area with Scrolling Enabled --- */
 .transcript-area {
   width: 100%;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 16px;
   padding: 24px;
+
+  /* Height constraints and scrolling */
   min-height: 180px;
+  max-height: 250px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+
   display: flex;
   flex-direction: column;
   gap: 20px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Custom Premium Scrollbar for the Transcript */
+.transcript-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.transcript-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-block: 10px; /* Padding for the top and bottom of the track */
+}
+
+.transcript-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.transcript-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .empty-state {
