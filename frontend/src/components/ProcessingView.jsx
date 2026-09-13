@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import "/src/ProcessingView.css";
 
 const AI_FACTS = [
   "AI is analyzing your document structure...",
@@ -13,55 +12,46 @@ export default function ProcessingView({
   statusText = "Reading PDF document...",
   uploadProgress = 0,
 }) {
-  // --- 1. Audio Refs ---
-  const audioRef = useRef(null); // For background music
-  const voiceRef = useRef(null); // NEW: For Maya's voice
+  const audioRef = useRef(null);
+  const voiceRef = useRef(null);
 
-  // --- 2. States for the new timer and facts ---
   const [factIndex, setFactIndex] = useState(0);
   const [startTime] = useState(Date.now());
   const [estimatedTimeLeft, setEstimatedTimeLeft] = useState(null);
 
-  // --- Effect 1: Audio Autoplay Hack ---
   useEffect(() => {
-    // 1. Start background music
     if (audioRef.current) {
       audioRef.current.volume = 0.2;
-      audioRef.current.play().catch((err) => {
-        console.log("Waiting for interaction to play bg music", err);
-      });
+      audioRef.current
+        .play()
+        .catch((err) =>
+          console.log("Waiting for interaction to play bg music", err),
+        );
     }
-
-    // 2. Start Maya Voice Greeting
     if (voiceRef.current) {
-      voiceRef.current.play().catch((err) => {
-        console.log("Waiting for interaction to play voice", err);
-      });
+      voiceRef.current
+        .play()
+        .catch((err) =>
+          console.log("Waiting for interaction to play voice", err),
+        );
     }
 
-    // Fallback click listener just in case it gets blocked by the browser
     const startAudioFallback = () => {
-      if (audioRef.current) {
+      if (audioRef.current)
         audioRef.current
           .play()
           .catch((err) => console.log("Bg music blocked:", err));
-      }
-      if (voiceRef.current) {
+      if (voiceRef.current)
         voiceRef.current
           .play()
           .catch((err) => console.log("Voice blocked:", err));
-      }
       document.removeEventListener("click", startAudioFallback);
     };
 
     document.addEventListener("click", startAudioFallback);
-
-    return () => {
-      document.removeEventListener("click", startAudioFallback);
-    };
+    return () => document.removeEventListener("click", startAudioFallback);
   }, []);
 
-  // --- Effect 2: Rotate interesting facts every 6.5 seconds ---
   useEffect(() => {
     const interval = setInterval(() => {
       setFactIndex((prev) => (prev + 1) % AI_FACTS.length);
@@ -69,86 +59,44 @@ export default function ProcessingView({
     return () => clearInterval(interval);
   }, []);
 
-  // --- Effect 3: Calculate accurate remaining time based on current progress speed ---
   useEffect(() => {
     if (uploadProgress > 0 && uploadProgress < 100) {
       const elapsedTimeInSeconds = (Date.now() - startTime) / 1000;
-
-      // Math: If 10% took 5 seconds, 100% takes 50 seconds.
       const totalEstimatedTime = elapsedTimeInSeconds / (uploadProgress / 100);
       const timeLeft = totalEstimatedTime - elapsedTimeInSeconds;
-
       setEstimatedTimeLeft(Math.max(0, Math.ceil(timeLeft)));
     } else if (uploadProgress === 100) {
       setEstimatedTimeLeft(0);
     }
   }, [uploadProgress, startTime]);
 
-  // --- Effect 4: Real-time countdown tick ---
   useEffect(() => {
-    // Don't run the tick if it's finished
     if (uploadProgress === 100) return;
-
     const timerId = setInterval(() => {
       setEstimatedTimeLeft((prev) => {
-        // If we haven't calculated a time yet, or it's already 0, do nothing
         if (prev === null || prev <= 0) return prev;
-        // Otherwise, tick down by 1 second
         return prev - 1;
       });
     }, 1000);
-
-    // Cleanup the interval when component unmounts or progress updates
     return () => clearInterval(timerId);
   }, [uploadProgress]);
 
-  // Format the seconds into a readable string
   const formatTime = (seconds) => {
     if (seconds === null) return "Calculating time...";
     if (seconds <= 0) return "Almost done...";
-
     if (seconds < 60) return `${seconds}s remaining`;
 
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    // Pad the seconds with a leading zero if needed (e.g., 1m 05s)
     const paddedSecs = secs.toString().padStart(2, "0");
-
     return `${mins}m ${paddedSecs}s remaining`;
   };
 
   return (
-    <div className="processing-wrapper">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          zIndex: -1,
-          filter: "brightness(0.35)",
-        }}
-      >
-        <source
-          src="/background/12823215_1920_1080_30fps.mp4"
-          type="video/mp4"
-        />
-      </video>
-
-      {/* Hidden Audio Elements */}
-      {/* 1. The Voice Greeting (Plays Once) */}
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 w-full relative">
       <audio ref={voiceRef}>
         <source src="/bg music/Processing-bg-audio.mp3" type="audio/mp3" />
       </audio>
-
-      {/* 2. The Looping Background Music */}
       <audio ref={audioRef} loop>
         <source
           src="/bg music/the_mountain-documentary-light-153631.mp3"
@@ -156,31 +104,35 @@ export default function ProcessingView({
         />
       </audio>
 
-      {/* The sleek, frosted-glass processing card */}
-      <div className="processing-card" style={{ zIndex: 1 }}>
-        <h2 className="processing-card__title">Processing Document...</h2>
+      <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-8 md:p-10 shadow-2xl z-10 flex flex-col items-center text-center">
+        <h2 className="text-2xl font-bold text-white mb-8">
+          Processing Document...
+        </h2>
 
         {/* Progress Bar Section */}
-        <div className="progress-container">
-          <div className="progress-stats">
-            <span className="status-text">{statusText}</span>
-            <span className="percentage-text">{uploadProgress}%</span>
+        <div className="w-full mb-10">
+          <div className="flex justify-between items-end mb-3">
+            <span className="text-sm font-medium text-slate-300">
+              {statusText}
+            </span>
+            <span className="text-xl font-bold text-indigo-400">
+              {uploadProgress}%
+            </span>
           </div>
 
-          <div className="progress-bar-background">
+          <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="progress-bar-fill"
+              className="h-full bg-indigo-500 transition-all duration-300 relative"
               style={{ width: `${uploadProgress}%` }}
             >
-              {/* Optional: Adds a cool glowing effect at the tip of the loading bar */}
-              <div className="progress-bar-glow"></div>
+              <div className="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/30 rounded-full"></div>
             </div>
           </div>
         </div>
 
         {/* Extras: Timer and Facts */}
-        <div className="processing-extras">
-          <div className="timer-badge">
+        <div className="w-full flex flex-col gap-6">
+          <div className="flex items-center justify-center gap-2 text-slate-400 bg-slate-800/50 py-2 px-4 rounded-lg w-fit mx-auto border border-slate-700/50">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -191,16 +143,20 @@ export default function ProcessingView({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="timer-icon"
             >
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            {formatTime(estimatedTimeLeft)}
+            <span className="text-sm font-medium">
+              {formatTime(estimatedTimeLeft)}
+            </span>
           </div>
 
-          <div className="fact-box">
-            <p className="fact-text" key={factIndex}>
+          <div className="h-12 flex items-center justify-center">
+            <p
+              className="text-sm text-slate-400 italic animate-pulse"
+              key={factIndex}
+            >
               {AI_FACTS[factIndex]}
             </p>
           </div>

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function UploadView({ onFileUpload }) {
   const audioRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -24,9 +25,28 @@ export default function UploadView({ onFileUpload }) {
     };
   }, []);
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const mockEvent = { target: { files: e.dataTransfer.files } };
+      onFileUpload(mockEvent);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
-      {/* Hidden Audio Element */}
       <audio ref={audioRef} loop>
         <source
           src="/bg music/the_mountain-documentary-light-153631.mp3"
@@ -34,12 +54,14 @@ export default function UploadView({ onFileUpload }) {
         />
       </audio>
 
-      {/* Main UI */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
-          Document AI <span className="text-indigo-500">Assistant</span>
+      <div className="text-center mb-14 pointer-events-none z-10">
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-6 drop-shadow-xl">
+          Document AI <br className="md:hidden" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#376E6F] via-[#DA7B93] to-[#DA7B93] drop-shadow-[0_0_20px_rgba(218,123,147,0.4)]">
+            Assistant
+          </span>
         </h1>
-        <p className="text-lg text-slate-400 max-w-xl mx-auto">
+        <p className="text-lg text-[#cbd5e1] max-w-xl mx-auto font-medium tracking-wide">
           Upload any PDF document to ask questions, extract concepts, and
           interact with your data instantly.
         </p>
@@ -55,20 +77,32 @@ export default function UploadView({ onFileUpload }) {
 
       <label
         htmlFor="pdf-upload"
-        className="w-full max-w-md p-10 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/50 hover:bg-slate-800/80 hover:border-indigo-500/50 transition-all duration-300 flex flex-col items-center justify-center gap-4 cursor-pointer group shadow-xl shadow-black/20"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`w-full max-w-lg p-12 border-2 border-dashed rounded-3xl transition-all duration-500 flex flex-col items-center justify-center gap-6 cursor-pointer group shadow-2xl z-10 ${
+          isDragging
+            ? "bg-[#2F4454]/60 border-[#DA7B93] scale-105 shadow-[0_0_40px_rgba(218,123,147,0.4)]"
+            : "bg-[#1C3334]/40 border-[#376E6F]/60 backdrop-blur-sm hover:bg-[#2F4454]/50 hover:border-[#DA7B93] hover:shadow-[0_0_30px_rgba(218,123,147,0.2)] hover:-translate-y-2"
+        }`}
       >
-        <div className="p-4 bg-slate-800 rounded-full group-hover:bg-indigo-900/30 group-hover:text-indigo-400 transition-colors">
+        <div
+          className={`p-5 rounded-2xl transition-all duration-300 ${
+            isDragging
+              ? "bg-[#DA7B93] text-white shadow-[0_0_20px_rgba(218,123,147,0.6)] animate-bounce"
+              : "bg-[#2E151B] text-[#DA7B93] group-hover:bg-[#DA7B93] group-hover:text-white group-hover:shadow-[0_0_20px_rgba(218,123,147,0.5)] group-hover:scale-110"
+          }`}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="32"
-            height="32"
+            width="36"
+            height="36"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-slate-400 group-hover:text-indigo-400 transition-colors"
           >
             <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
             <polyline points="14 2 14 8 20 8" />
@@ -77,16 +111,18 @@ export default function UploadView({ onFileUpload }) {
           </svg>
         </div>
 
-        <div className="text-center">
-          <span className="block text-slate-200 font-semibold mb-1">
-            Click to upload or drag and drop
+        <div className="text-center pointer-events-none">
+          <span className="block text-white text-lg font-semibold mb-2 transition-all">
+            {isDragging
+              ? "Drop your PDF right here!"
+              : "Click to upload or drag and drop"}
           </span>
-          <span className="block text-sm text-slate-500">
+          <span className="block text-sm text-[#8fa9a9] tracking-wider uppercase">
             PDF documents only
           </span>
         </div>
 
-        <div className="mt-4 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-indigo-900/20 w-full text-center">
+        <div className="mt-4 px-8 py-3.5 bg-gradient-to-r from-[#376E6F] to-[#DA7B93] hover:from-[#DA7B93] hover:to-[#376E6F] text-white font-bold tracking-wide rounded-xl transition-all duration-500 shadow-[0_0_20px_rgba(55,110,111,0.4)] hover:shadow-[0_0_30px_rgba(218,123,147,0.6)] w-full text-center pointer-events-none border border-white/10">
           Choose File
         </div>
       </label>

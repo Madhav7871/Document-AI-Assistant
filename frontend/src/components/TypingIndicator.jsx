@@ -1,14 +1,20 @@
+import React from "react";
+
 export default function TypingIndicator() {
   return (
-    <div className="msg-row">
-      <div className="avatar avatar--bot">N</div>
-      <div className="bubble bubble--bot">
-        <div className="typing">
-          <span />
-          <span />
-          <span />
-        </div>
-      </div>
+    <div className="flex items-center gap-1.5 px-2 py-1">
+      <span
+        className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+        style={{ animationDelay: "0ms" }}
+      />
+      <span
+        className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+        style={{ animationDelay: "150ms" }}
+      />
+      <span
+        className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+        style={{ animationDelay: "300ms" }}
+      />
     </div>
   );
 }

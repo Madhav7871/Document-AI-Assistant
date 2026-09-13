@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import "../VoiceAssistant.css";
 
 const VoiceAssistantView = ({ activeFile, onBack }) => {
   const [micState, setMicState] = useState("idle");
@@ -9,8 +8,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
   const recognitionRef = useRef(null);
   const stateRef = useRef("idle");
   const timeoutRef = useRef(null);
-
-  // NEW: Ref to handle automatic scrolling
   const transcriptEndRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -19,7 +16,6 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     stateRef.current = micState;
   }, [micState]);
 
-  // NEW: Auto-scroll to bottom whenever transcript or response updates
   useEffect(() => {
     if (transcriptEndRef.current) {
       transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -143,13 +139,8 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
-    utterance.onstart = () => {
-      setMicState("speaking");
-    };
-
-    utterance.onend = () => {
-      setMicState("idle");
-    };
+    utterance.onstart = () => setMicState("speaking");
+    utterance.onend = () => setMicState("idle");
 
     window.speechSynthesis.speak(utterance);
   };
@@ -163,19 +154,26 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
     };
   }, []);
 
-  return (
-    <div className="voice-assistant-container">
-      {/* Background Video Layer */}
-      <video className="bg-video" autoPlay loop muted playsInline>
-        <source
-          src="/background/12823215_1920_1080_30fps.mp4"
-          type="video/mp4"
-        />
-      </video>
-      <div className="bg-overlay"></div>
+  // Determine button styles based on state
+  const getMicStyles = () => {
+    switch (micState) {
+      case "listening":
+        return "bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.5)]";
+      case "processing":
+        return "bg-blue-500 hover:bg-blue-600 animate-pulse";
+      case "speaking":
+        return "bg-purple-500 hover:bg-purple-600 shadow-[0_0_30px_rgba(168,85,247,0.5)]";
+      default:
+        return "bg-slate-700 hover:bg-slate-600";
+    }
+  };
 
-      {/* Moved Button outside the center wrapper for absolute positioning */}
-      <button className="back-to-chat-btn" onClick={onBack}>
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 w-full relative">
+      <button
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-200 rounded-lg border border-slate-700/50 transition-colors backdrop-blur-md"
+        onClick={onBack}
+      >
         <svg
           width="18"
           height="18"
@@ -192,68 +190,88 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         Return to Chat
       </button>
 
-      <div className="voice-assistant-wrapper content-layer">
-        <div className="voice-assistant-card glass-card">
-          <div className="voice-header">
-            <h2>🎙️ AI Voice Assistant</h2>
-            <p className="subtitle">Tap the microphone and start speaking</p>
-          </div>
+      <div className="w-full max-w-xl bg-slate-900 border border-slate-700 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+            🎙️ AI Voice Assistant
+          </h2>
+          <p className="text-slate-400">
+            Tap the microphone and start speaking
+          </p>
+        </div>
 
-          <div className="mic-display-area">
-            <div className={`mic-ring ring-1 ${micState}`}></div>
-            <div className={`mic-ring ring-2 ${micState}`}></div>
+        {/* Interactive Microphone Display */}
+        <div className="relative flex items-center justify-center mb-10 h-32 w-32">
+          {micState === "listening" && (
+            <div className="absolute inset-0 rounded-full border-2 border-emerald-500 animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite] opacity-20"></div>
+          )}
 
-            <button
-              className={`mic-button ${micState}`}
-              onClick={toggleListen}
-              disabled={micState === "processing"}
-            >
-              {micState === "processing" ? (
-                <span className="spinner">⏳</span>
-              ) : micState === "speaking" ? (
-                <span className="speaker-icon">🔊</span>
-              ) : (
-                <span className="mic-icon">🎤</span>
+          <button
+            className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center text-3xl text-white transition-all duration-300 ${getMicStyles()}`}
+            onClick={toggleListen}
+            disabled={micState === "processing"}
+          >
+            {micState === "processing"
+              ? "⏳"
+              : micState === "speaking"
+                ? "🔊"
+                : "🎤"}
+          </button>
+        </div>
+
+        {/* Status Badge */}
+        <div className="mb-10">
+          {micState === "idle" && (
+            <span className="px-4 py-1.5 rounded-full bg-slate-800 text-slate-300 text-sm font-medium border border-slate-700">
+              Tap to speak
+            </span>
+          )}
+          {micState === "listening" && (
+            <span className="px-4 py-1.5 rounded-full bg-emerald-900/30 text-emerald-400 text-sm font-medium border border-emerald-800/50">
+              Listening...
+            </span>
+          )}
+          {micState === "processing" && (
+            <span className="px-4 py-1.5 rounded-full bg-blue-900/30 text-blue-400 text-sm font-medium border border-blue-800/50">
+              Thinking...
+            </span>
+          )}
+          {micState === "speaking" && (
+            <span className="px-4 py-1.5 rounded-full bg-purple-900/30 text-purple-400 text-sm font-medium border border-purple-800/50">
+              Answering...
+            </span>
+          )}
+        </div>
+
+        {/* Live Transcript Area */}
+        <div className="w-full bg-slate-950/50 rounded-2xl p-6 h-64 overflow-y-auto flex flex-col gap-4 border border-slate-800/50">
+          {!transcript && !aiResponse ? (
+            <div className="h-full flex items-center justify-center text-slate-500 text-sm">
+              Your conversation will appear here...
+            </div>
+          ) : (
+            <>
+              {transcript && (
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-slate-500 mb-1 mr-1">You</span>
+                  <div className="bg-indigo-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm max-w-[85%] text-sm leading-relaxed shadow-sm">
+                    {transcript}
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
-
-          <div className="status-indicator">
-            {micState === "idle" && (
-              <span className="badge badge-gray">Tap to speak</span>
-            )}
-            {micState === "listening" && (
-              <span className="badge badge-green">Listening...</span>
-            )}
-            {micState === "processing" && (
-              <span className="badge badge-blue">Thinking...</span>
-            )}
-            {micState === "speaking" && (
-              <span className="badge badge-purple">Answering</span>
-            )}
-          </div>
-
-          <div className="transcript-area">
-            {transcript && (
-              <div className="message user-message">
-                <div className="message-label">You</div>
-                <div className="message-content">{transcript}</div>
-              </div>
-            )}
-            {aiResponse && (
-              <div className="message ai-message">
-                <div className="message-label">Assistant</div>
-                <div className="message-content">{aiResponse}</div>
-              </div>
-            )}
-            {!transcript && !aiResponse && (
-              <div className="empty-state">
-                Your conversation will appear here...
-              </div>
-            )}
-            {/* NEW: Invisible div to force scroll to bottom */}
-            <div ref={transcriptEndRef} />
-          </div>
+              {aiResponse && (
+                <div className="flex flex-col items-start mt-2">
+                  <span className="text-xs text-slate-500 mb-1 ml-1">
+                    Assistant
+                  </span>
+                  <div className="bg-slate-800 border border-slate-700 text-slate-200 px-4 py-3 rounded-2xl rounded-tl-sm max-w-[95%] text-sm leading-relaxed shadow-sm">
+                    {aiResponse}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          <div ref={transcriptEndRef} />
         </div>
       </div>
     </div>

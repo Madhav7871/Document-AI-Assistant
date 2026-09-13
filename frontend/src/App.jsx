@@ -8,7 +8,7 @@ import VoiceAssistantView from "./components/VoiceAssistantView.jsx";
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function App() {
-  const [currentView, setCurrentView] = useState("UPLOAD"); // "UPLOAD", "PROCESSING", "CHAT", "QUIZ", or "VOICE"
+  const [currentView, setCurrentView] = useState("UPLOAD");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -21,7 +21,7 @@ export default function App() {
 
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       alert("Please select a valid PDF file.");
-      e.target.value = ""; // Clear input
+      e.target.value = "";
       return;
     }
 
@@ -76,7 +76,7 @@ export default function App() {
       alert(`Upload Error: ${err.message}`);
       setCurrentView("UPLOAD");
     } finally {
-      e.target.value = ""; // Reset file input so user can upload same file again if needed
+      e.target.value = "";
     }
   };
 
@@ -118,12 +118,10 @@ export default function App() {
     }
   };
 
-  // --- VIEW ROUTING ENCAPSULATED FOR GLOBAL THEME WRAPPER ---
   const renderContent = () => {
     if (currentView === "UPLOAD") {
       return <UploadView onFileUpload={handleFileUpload} />;
     }
-
     if (currentView === "PROCESSING") {
       return (
         <ProcessingView
@@ -132,7 +130,6 @@ export default function App() {
         />
       );
     }
-
     if (currentView === "QUIZ") {
       return (
         <QuizView
@@ -141,7 +138,6 @@ export default function App() {
         />
       );
     }
-
     if (currentView === "VOICE") {
       return (
         <VoiceAssistantView
@@ -151,13 +147,12 @@ export default function App() {
       );
     }
 
-    // Default Chat View
     return (
       <>
         <div className="absolute top-8 right-52 z-50 flex gap-3">
           <button
             onClick={() => setCurrentView("VOICE")}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-200 text-sm font-medium rounded-lg border border-slate-700/50 backdrop-blur-md transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#1C3334]/80 hover:bg-[#376E6F] text-[#f7f7f7] text-sm font-medium rounded-lg border border-[#376E6F]/50 backdrop-blur-md transition-all shadow-[0_0_15px_rgba(55,110,111,0.3)] hover:shadow-[0_0_20px_rgba(55,110,111,0.6)] hover:-translate-y-0.5"
           >
             <svg
               width="16"
@@ -179,7 +174,7 @@ export default function App() {
 
           <button
             onClick={() => setCurrentView("QUIZ")}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-200 text-sm font-medium rounded-lg border border-slate-700/50 backdrop-blur-md transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2E151B]/80 hover:bg-[#DA7B93] text-[#f7f7f7] text-sm font-medium rounded-lg border border-[#DA7B93]/50 backdrop-blur-md transition-all shadow-[0_0_15px_rgba(218,123,147,0.3)] hover:shadow-[0_0_20px_rgba(218,123,147,0.6)] hover:-translate-y-0.5"
           >
             <svg
               width="16"
@@ -210,8 +205,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
-      {renderContent()}
+    <div className="min-h-screen bg-[#070b0d] text-slate-50 font-sans selection:bg-[#DA7B93]/40 relative overflow-hidden flex flex-col">
+      {/* Animated Ambient Neon Backgrounds */}
+      <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] bg-[#376E6F] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-15%] right-[-10%] w-[50vw] h-[50vw] bg-[#DA7B93] rounded-full mix-blend-screen filter blur-[140px] opacity-15 animate-[pulse_4s_ease-in-out_infinite] pointer-events-none"></div>
+
+      {/* App Content */}
+      <div className="relative z-10 flex-1 flex flex-col">
+        {renderContent()}
+      </div>
     </div>
   );
 }

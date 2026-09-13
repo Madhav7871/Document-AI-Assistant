@@ -1,17 +1,18 @@
 import React from "react";
-// Make sure your CSS is imported here
-// import "./Message.css";
 
 export default function Message({ role, content, isError }) {
   const isUser = role === "user";
 
   return (
-    <div className={`msg-row ${isUser ? "msg-row--user" : "msg-row--bot"}`}>
+    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`bubble ${isUser ? "bubble--user" : "bubble--bot"} ${
-          isError ? "bubble--error" : ""
+        className={`max-w-[85%] md:max-w-[75%] p-4 md:p-5 rounded-2xl leading-relaxed shadow-sm whitespace-pre-wrap ${
+          isUser
+            ? "bg-indigo-600 text-white rounded-tr-sm shadow-indigo-900/20"
+            : isError
+              ? "bg-red-900/20 border border-red-500/50 text-red-200 rounded-tl-sm"
+              : "bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-sm"
         }`}
-        style={{ whiteSpace: "pre-wrap" }}
       >
         {content}
       </div>

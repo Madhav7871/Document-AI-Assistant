@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "/src/QuizView.css";
 
 export default function QuizView({ activeFile, onBack }) {
   const [step, setStep] = useState("setup"); // 'setup', 'loading', 'quiz', 'results'
@@ -14,16 +13,15 @@ export default function QuizView({ activeFile, onBack }) {
     setStep("loading");
 
     try {
-      // NOTE: Update this URL if your backend is running on a different port/route
       const response = await fetch("http://127.0.0.1:8000/quiz", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          file: activeFile, // Tells backend which document to use
-          difficulty: difficulty, // Easy, Medium, or Hard
-          randomizer: Math.floor(Math.random() * 10000), // Forces fresh questions every time
+          file: activeFile,
+          difficulty: difficulty,
+          randomizer: Math.floor(Math.random() * 10000),
         }),
       });
 
@@ -32,21 +30,17 @@ export default function QuizView({ activeFile, onBack }) {
       }
 
       const data = await response.json();
-
-      // Assuming your backend returns the array of 5 questions directly
       setQuestions(data);
       setStep("quiz");
     } catch (error) {
       console.error("Failed to generate quiz:", error);
       alert("Error generating questions. Is your backend running?");
-      setStep("setup"); // Kick them back to the start button if it fails
+      setStep("setup");
     }
   };
 
   // 2. Handle user selecting an answer
   const handleAnswer = () => {
-    // If you are comparing strings from the backend instead of index numbers,
-    // you might need to change this logic to: if (questions[currentIndex].options[selectedOption] === questions[currentIndex].correctAnswer)
     if (selectedOption === questions[currentIndex].correctAnswer) {
       setScore(score + 1);
     }
@@ -69,46 +63,52 @@ export default function QuizView({ activeFile, onBack }) {
   };
 
   return (
-    <div className="quiz-wrapper">
-      {/* Keeping your glassmorphism video background style */}
-      <video autoPlay loop muted playsInline className="quiz-background-video">
-        <source
-          src="/background/12823215_1920_1080_30fps.mp4"
-          type="video/mp4"
-        />
-      </video>
-
-      <div className="quiz-glass-container">
-        <header className="quiz-header">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
+      <div className="w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-2xl p-6 md:p-10 shadow-2xl shadow-black/50">
+        <header className="flex justify-between items-start mb-8 pb-6 border-b border-slate-800">
           <div>
-            <div className="header__eyebrow">
-              <span className="header__dot"></span>
+            <div className="text-xs font-mono tracking-widest text-indigo-400 uppercase flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
               Testing on {activeFile}
             </div>
-            <h1 className="header__title">Knowledge Assessment</h1>
+            <h1 className="text-2xl font-bold text-white">
+              Knowledge Assessment
+            </h1>
           </div>
-          <button className="back-btn" onClick={onBack}>
+          <button
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg border border-slate-700 transition-colors"
+            onClick={onBack}
+          >
             Return to Chat
           </button>
         </header>
 
-        <main className="quiz-content">
+        <main className="w-full">
           {/* STEP 1: SETUP */}
           {step === "setup" && (
-            <div className="setup-panel">
-              <h2>Select Difficulty</h2>
-              <div className="difficulty-options">
+            <div className="flex flex-col items-center text-center py-4">
+              <h2 className="text-xl font-semibold text-slate-200 mb-6">
+                Select Difficulty
+              </h2>
+              <div className="flex gap-4 mb-10">
                 {["Easy", "Medium", "Hard"].map((lvl) => (
                   <button
                     key={lvl}
-                    className={`diff-btn ${difficulty === lvl ? "active" : ""}`}
+                    className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                      difficulty === lvl
+                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40 ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900"
+                        : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                    }`}
                     onClick={() => setDifficulty(lvl)}
                   >
                     {lvl}
                   </button>
                 ))}
               </div>
-              <button className="start-btn" onClick={generateQuiz}>
+              <button
+                className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors shadow-lg shadow-indigo-900/20"
+                onClick={generateQuiz}
+              >
                 Generate Questions
               </button>
             </div>
@@ -116,26 +116,39 @@ export default function QuizView({ activeFile, onBack }) {
 
           {/* STEP 2: LOADING */}
           {step === "loading" && (
-            <div className="loading-panel">
-              <div className="spinner"></div>
-              <p>Analyzing document and generating {difficulty} questions...</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 border-4 border-slate-800 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+              <p className="text-slate-300">
+                Analyzing document and generating{" "}
+                <span className="text-indigo-400 font-medium">
+                  {difficulty}
+                </span>{" "}
+                questions...
+              </p>
             </div>
           )}
 
           {/* STEP 3: QUIZ ACTIVE */}
           {step === "quiz" && questions.length > 0 && (
-            <div className="active-quiz-panel">
-              <div className="progress-indicator">
-                Question {currentIndex + 1} of {questions.length}
+            <div className="flex flex-col">
+              <div className="text-sm font-medium text-slate-400 mb-4 flex items-center justify-between">
+                <span>
+                  Question {currentIndex + 1} of {questions.length}
+                </span>
+                <span className="text-indigo-400">{difficulty} Level</span>
               </div>
-              <h2 className="question-text">
+              <h2 className="text-xl text-white font-medium leading-relaxed mb-8">
                 {questions[currentIndex].question}
               </h2>
-              <div className="options-grid">
+              <div className="flex flex-col gap-3 mb-8">
                 {questions[currentIndex].options.map((opt, idx) => (
                   <button
                     key={idx}
-                    className={`option-btn ${selectedOption === idx ? "selected" : ""}`}
+                    className={`p-4 text-left rounded-xl border transition-all ${
+                      selectedOption === idx
+                        ? "bg-indigo-600/20 border-indigo-500 text-white"
+                        : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750 hover:border-slate-600"
+                    }`}
                     onClick={() => setSelectedOption(idx)}
                   >
                     {opt}
@@ -143,7 +156,7 @@ export default function QuizView({ activeFile, onBack }) {
                 ))}
               </div>
               <button
-                className="next-btn"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
                 disabled={selectedOption === null}
                 onClick={handleAnswer}
               >
@@ -156,18 +169,29 @@ export default function QuizView({ activeFile, onBack }) {
 
           {/* STEP 4: RESULTS */}
           {step === "results" && (
-            <div className="results-panel">
-              <h2>Assessment Complete!</h2>
-              <div className="score-display">
-                <span className="score-number">{score}</span>
-                <span className="score-total">/ {questions.length}</span>
+            <div className="flex flex-col items-center text-center py-8">
+              <h2 className="text-2xl font-bold text-white mb-8">
+                Assessment Complete!
+              </h2>
+              <div className="w-32 h-32 rounded-full border-4 border-indigo-500 flex items-center justify-center mb-6 bg-indigo-900/20 shadow-lg shadow-indigo-900/20">
+                <div className="flex items-baseline">
+                  <span className="text-4xl font-extrabold text-white">
+                    {score}
+                  </span>
+                  <span className="text-xl text-slate-400 ml-1">
+                    / {questions.length}
+                  </span>
+                </div>
               </div>
-              <p className="score-message">
+              <p className="text-lg text-slate-300 mb-8">
                 {score === questions.length
                   ? "Perfect score! You mastered this document."
                   : "Good effort! Review the document and try again."}
               </p>
-              <button className="retry-btn" onClick={handleRetry}>
+              <button
+                className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg border border-slate-700 transition-colors"
+                onClick={handleRetry}
+              >
                 Take Another Test
               </button>
             </div>
