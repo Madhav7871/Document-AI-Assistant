@@ -147,60 +147,17 @@ export default function App() {
       );
     }
 
+    // Default Chat View with integrated toolbar
     return (
-      <>
-        <div className="absolute top-8 right-52 z-50 flex gap-3">
-          <button
-            onClick={() => setCurrentView("VOICE")}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1C3334]/80 hover:bg-[#376E6F] text-[#f7f7f7] text-sm font-medium rounded-lg border border-[#376E6F]/50 backdrop-blur-md transition-all shadow-[0_0_15px_rgba(55,110,111,0.3)] hover:shadow-[0_0_20px_rgba(55,110,111,0.6)] hover:-translate-y-0.5"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
-            </svg>
-            Voice Assistant
-          </button>
-
-          <button
-            onClick={() => setCurrentView("QUIZ")}
-            className="flex items-center gap-2 px-4 py-2 bg-[#2E151B]/80 hover:bg-[#DA7B93] text-[#f7f7f7] text-sm font-medium rounded-lg border border-[#DA7B93]/50 backdrop-blur-md transition-all shadow-[0_0_15px_rgba(218,123,147,0.3)] hover:shadow-[0_0_20px_rgba(218,123,147,0.6)] hover:-translate-y-0.5"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 11l3 3L22 4"></path>
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-            </svg>
-            Take a Quiz
-          </button>
-        </div>
-
-        <ChatView
-          activeFile={activeFile}
-          onUploadNew={() => setCurrentView("UPLOAD")}
-          messages={messages}
-          loading={loading}
-          onSendMessage={send}
-        />
-      </>
+      <ChatView
+        activeFile={activeFile}
+        onUploadNew={() => setCurrentView("UPLOAD")}
+        onOpenVoice={() => setCurrentView("VOICE")}
+        onOpenQuiz={() => setCurrentView("QUIZ")}
+        messages={messages}
+        loading={loading}
+        onSendMessage={send}
+      />
     );
   };
 
