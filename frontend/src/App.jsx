@@ -118,142 +118,100 @@ export default function App() {
     }
   };
 
-  // --- VIEW ROUTING ---
+  // --- VIEW ROUTING ENCAPSULATED FOR GLOBAL THEME WRAPPER ---
+  const renderContent = () => {
+    if (currentView === "UPLOAD") {
+      return <UploadView onFileUpload={handleFileUpload} />;
+    }
 
-  if (currentView === "UPLOAD") {
-    return <UploadView onFileUpload={handleFileUpload} />;
-  }
+    if (currentView === "PROCESSING") {
+      return (
+        <ProcessingView
+          statusText={statusText}
+          uploadProgress={uploadProgress}
+        />
+      );
+    }
 
-  if (currentView === "PROCESSING") {
+    if (currentView === "QUIZ") {
+      return (
+        <QuizView
+          activeFile={activeFile}
+          onBack={() => setCurrentView("CHAT")}
+        />
+      );
+    }
+
+    if (currentView === "VOICE") {
+      return (
+        <VoiceAssistantView
+          activeFile={activeFile}
+          onBack={() => setCurrentView("CHAT")}
+        />
+      );
+    }
+
+    // Default Chat View
     return (
-      <ProcessingView statusText={statusText} uploadProgress={uploadProgress} />
-    );
-  }
+      <>
+        <div className="absolute top-8 right-52 z-50 flex gap-3">
+          <button
+            onClick={() => setCurrentView("VOICE")}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-200 text-sm font-medium rounded-lg border border-slate-700/50 backdrop-blur-md transition-all shadow-sm"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            Voice Assistant
+          </button>
 
-  if (currentView === "QUIZ") {
-    return (
-      <QuizView activeFile={activeFile} onBack={() => setCurrentView("CHAT")} />
-    );
-  }
+          <button
+            onClick={() => setCurrentView("QUIZ")}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-slate-200 text-sm font-medium rounded-lg border border-slate-700/50 backdrop-blur-md transition-all shadow-sm"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+            Take a Quiz
+          </button>
+        </div>
 
-  if (currentView === "VOICE") {
-    return (
-      <VoiceAssistantView
-        activeFile={activeFile}
-        onBack={() => setCurrentView("CHAT")}
-      />
+        <ChatView
+          activeFile={activeFile}
+          onUploadNew={() => setCurrentView("UPLOAD")}
+          messages={messages}
+          loading={loading}
+          onSendMessage={send}
+        />
+      </>
     );
-  }
+  };
 
-  // --- DEFAULT (CHAT) VIEW ---
   return (
-    <>
-      {/* 
-        Container for the extra header buttons. 
-        Placed at right: 210px to leave room for your "Return to Home" button.
-      */}
-      <div
-        style={{
-          position: "absolute",
-          top: "32px",
-          right: "210px",
-          zIndex: 100,
-          display: "flex",
-          gap: "12px",
-        }}
-      >
-        {/* Voice Assistant Button */}
-        <button
-          onClick={() => setCurrentView("VOICE")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            backgroundColor: "transparent",
-            color: "#e2e8f0",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "400",
-            fontSize: "14px",
-            backdropFilter: "blur(10px)",
-            transition: "all 0.2s ease",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="8" y1="23" x2="16" y2="23"></line>
-          </svg>
-          Voice Assistant
-        </button>
-
-        {/* Quiz Button */}
-        <button
-          onClick={() => setCurrentView("QUIZ")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            backgroundColor: "transparent",
-            color: "#e2e8f0",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "400",
-            fontSize: "14px",
-            backdropFilter: "blur(10px)",
-            transition: "all 0.2s ease",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-          </svg>
-          Take a Quiz
-        </button>
-      </div>
-
-      <ChatView
-        activeFile={activeFile}
-        onUploadNew={() => setCurrentView("UPLOAD")}
-        messages={messages}
-        loading={loading}
-        onSendMessage={send}
-      />
-    </>
+    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30 relative">
+      {renderContent()}
+    </div>
   );
 }
