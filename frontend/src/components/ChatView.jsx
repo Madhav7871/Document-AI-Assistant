@@ -43,23 +43,23 @@ export default function ChatView({
   };
 
   return (
-    <div className="flex flex-col items-center pt-8 pb-8 px-4 h-screen w-full overflow-hidden">
-      {/* Top Header & Button Toolbar */}
-      <div className="w-full max-w-4xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 p-5 bg-[#1C3334]/40 backdrop-blur-md border border-[#376E6F]/40 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] shrink-0 z-10">
+    // FIX: Swapped "absolute inset-0" with "w-full h-screen" to strictly lock to display window
+    <div className="w-full h-screen flex flex-col items-center pt-6 pb-6 px-4 md:px-8 overflow-hidden">
+      <div className="w-full max-w-4xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 p-4 md:p-5 bg-[#1C3334]/40 backdrop-blur-md border border-[#376E6F]/40 rounded-2xl shadow-lg shrink-0 z-10">
         <div>
           <div className="text-xs font-mono tracking-widest text-[#DA7B93] uppercase flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-[#DA7B93] shadow-[0_0_10px_rgba(218,123,147,0.8)] animate-pulse"></span>
             Grounded in {activeFile}
           </div>
-          <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f7f7f7] to-[#8fa9a9]">
+          <h1 className="text-xl md:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f7f7f7] to-[#8fa9a9]">
             Document AI
           </h1>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <button
             onClick={onOpenVoice}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1C3334]/80 hover:bg-[#376E6F] text-[#f7f7f7] text-sm font-semibold rounded-xl border border-[#376E6F]/50 transition-all duration-300 shadow-[0_0_15px_rgba(55,110,111,0.3)] hover:shadow-[0_0_20px_rgba(55,110,111,0.6)] hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-3 py-2 bg-[#1C3334]/80 hover:bg-[#376E6F] text-[#f7f7f7] text-xs md:text-sm font-semibold rounded-xl border border-[#376E6F]/50 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <svg
               width="16"
@@ -78,10 +78,9 @@ export default function ChatView({
             </svg>
             Voice
           </button>
-
           <button
             onClick={onOpenQuiz}
-            className="flex items-center gap-2 px-4 py-2 bg-[#2E151B]/80 hover:bg-[#DA7B93] text-[#f7f7f7] text-sm font-semibold rounded-xl border border-[#DA7B93]/50 transition-all duration-300 shadow-[0_0_15px_rgba(218,123,147,0.3)] hover:shadow-[0_0_20px_rgba(218,123,147,0.6)] hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-3 py-2 bg-[#2E151B]/80 hover:bg-[#DA7B93] text-[#f7f7f7] text-xs md:text-sm font-semibold rounded-xl border border-[#DA7B93]/50 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <svg
               width="16"
@@ -98,10 +97,9 @@ export default function ChatView({
             </svg>
             Quiz
           </button>
-
           <button
             onClick={onUploadNew}
-            className="flex items-center gap-2 px-4 py-2 bg-[#070b0d]/60 hover:bg-[#2F4454] text-[#f7f7f7] text-sm font-semibold rounded-xl border border-[#376E6F]/30 transition-all duration-300 shadow-[0_0_15px_rgba(0,0,0,0.2)] hover:shadow-[0_0_25px_rgba(47,68,84,0.5)] hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-3 py-2 bg-[#070b0d]/60 hover:bg-[#2F4454] text-[#f7f7f7] text-xs md:text-sm font-semibold rounded-xl border border-[#376E6F]/30 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -122,9 +120,8 @@ export default function ChatView({
         </div>
       </div>
 
-      {/* Chat Messages */}
       <main
-        className="w-full max-w-4xl flex-1 overflow-y-auto flex flex-col gap-6 pr-2 z-10"
+        className="w-full max-w-4xl flex-1 overflow-y-auto flex flex-col gap-6 py-4 pr-2 z-10"
         ref={chatRef}
       >
         {messages.map((m, i) => {
@@ -144,16 +141,15 @@ export default function ChatView({
         )}
       </main>
 
-      {/* Composer / Input Box */}
-      <div className="w-full max-w-4xl mt-4 shrink-0 z-10">
+      <div className="w-full max-w-4xl shrink-0 z-10 mt-2">
         {messages.length === 1 && (
-          <div className="flex flex-wrap justify-center gap-3 mb-5">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-4">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 onClick={() => onSendMessage(s)}
                 disabled={loading}
-                className="px-5 py-2.5 text-xs md:text-sm font-medium bg-[#1C3334]/80 border border-[#376E6F]/50 hover:border-[#DA7B93] hover:text-[#DA7B93] text-[#cbd5e1] rounded-full transition-all duration-300 shadow-lg hover:shadow-[0_0_15px_rgba(218,123,147,0.3)] disabled:opacity-50"
+                className="px-4 py-2 text-xs md:text-sm font-medium bg-[#1C3334]/80 border border-[#376E6F]/50 hover:border-[#DA7B93] hover:text-[#DA7B93] text-[#cbd5e1] rounded-full transition-all duration-300 shadow-md hover:shadow-[0_0_15px_rgba(218,123,147,0.3)] disabled:opacity-50"
               >
                 {s}
               </button>
@@ -171,18 +167,18 @@ export default function ChatView({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about your document..."
-            className="w-full max-h-32 bg-transparent p-4 text-white outline-none placeholder:text-[#376E6F] resize-none font-medium"
+            className="w-full max-h-32 bg-transparent p-3 md:p-4 text-white outline-none placeholder:text-[#376E6F] resize-none font-medium"
             rows={1}
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="p-3.5 mb-1 mr-1 bg-gradient-to-r from-[#376E6F] to-[#DA7B93] hover:from-[#DA7B93] hover:to-[#376E6F] disabled:from-[#1C3334] disabled:to-[#1C3334] disabled:text-[#376E6F] text-white rounded-xl transition-all duration-500 flex shrink-0 items-center justify-center shadow-[0_0_15px_rgba(218,123,147,0.4)] disabled:shadow-none"
+            className="p-3 md:p-3.5 mb-1 mr-1 bg-gradient-to-r from-[#376E6F] to-[#DA7B93] hover:from-[#DA7B93] hover:to-[#376E6F] disabled:from-[#1C3334] disabled:to-[#1C3334] disabled:text-[#376E6F] text-white rounded-xl transition-all duration-500 flex shrink-0 items-center justify-center shadow-[0_0_15px_rgba(218,123,147,0.4)] disabled:shadow-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import UploadView from "./components/UploadView.jsx";
 import ProcessingView from "./components/ProcessingView.jsx";
 import ChatView from "./components/ChatView.jsx";
@@ -14,6 +14,11 @@ export default function App() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [statusText, setStatusText] = useState("");
   const [activeFile, setActiveFile] = useState(null);
+
+  // FIX: Instantly scroll to the top of the screen whenever the view changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -119,35 +124,30 @@ export default function App() {
   };
 
   const renderContent = () => {
-    if (currentView === "UPLOAD") {
+    if (currentView === "UPLOAD")
       return <UploadView onFileUpload={handleFileUpload} />;
-    }
-    if (currentView === "PROCESSING") {
+    if (currentView === "PROCESSING")
       return (
         <ProcessingView
           statusText={statusText}
           uploadProgress={uploadProgress}
         />
       );
-    }
-    if (currentView === "QUIZ") {
+    if (currentView === "QUIZ")
       return (
         <QuizView
           activeFile={activeFile}
           onBack={() => setCurrentView("CHAT")}
         />
       );
-    }
-    if (currentView === "VOICE") {
+    if (currentView === "VOICE")
       return (
         <VoiceAssistantView
           activeFile={activeFile}
           onBack={() => setCurrentView("CHAT")}
         />
       );
-    }
 
-    // Default Chat View with integrated toolbar
     return (
       <ChatView
         activeFile={activeFile}
@@ -162,13 +162,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b0d] text-slate-50 font-sans selection:bg-[#DA7B93]/40 relative overflow-hidden flex flex-col">
-      {/* Animated Ambient Neon Backgrounds */}
+    <div className="min-h-screen bg-[#070b0d] text-slate-50 font-sans selection:bg-[#DA7B93]/40 relative overflow-x-hidden flex flex-col">
       <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] bg-[#376E6F] rounded-full mix-blend-screen filter blur-[140px] opacity-20 animate-pulse pointer-events-none"></div>
       <div className="absolute bottom-[-15%] right-[-10%] w-[50vw] h-[50vw] bg-[#DA7B93] rounded-full mix-blend-screen filter blur-[140px] opacity-15 animate-[pulse_4s_ease-in-out_infinite] pointer-events-none"></div>
 
-      {/* App Content */}
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="relative z-10 flex-1 flex flex-col w-full">
         {renderContent()}
       </div>
     </div>
