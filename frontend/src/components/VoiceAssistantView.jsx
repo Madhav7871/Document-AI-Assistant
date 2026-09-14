@@ -124,9 +124,10 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12 w-full relative z-10">
+    <div className="flex flex-col items-center justify-start min-h-screen px-4 pt-28 pb-12 w-full relative z-10 overflow-y-auto">
+      {/* Changed to 'fixed' and added z-50 so it always stays visible in the corner */}
       <button
-        className="absolute top-8 left-8 flex items-center gap-2 px-5 py-2.5 bg-[#1C3334] hover:bg-[#376E6F] text-white font-bold rounded-xl border border-[#376E6F]/50 transition-all duration-300 shadow-[0_0_15px_rgba(55,110,111,0.2)] hover:shadow-[0_0_25px_rgba(55,110,111,0.5)]"
+        className="fixed top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 px-5 py-2.5 bg-[#1C3334]/80 backdrop-blur-md hover:bg-[#376E6F] text-white font-bold rounded-xl border border-[#376E6F]/50 transition-all duration-300 shadow-[0_0_15px_rgba(55,110,111,0.3)] hover:shadow-[0_0_25px_rgba(55,110,111,0.6)] z-50"
         onClick={onBack}
       >
         <svg
@@ -145,8 +146,9 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
         Return to Chat
       </button>
 
-      <div className="w-full max-w-2xl bg-[#070b0d]/80 backdrop-blur-2xl border border-[#376E6F]/40 rounded-[2.5rem] p-10 shadow-[0_15px_50px_rgba(0,0,0,0.6)] flex flex-col items-center">
-        <div className="text-center mb-12">
+      {/* Added 'my-auto' to vertically center it safely, and slightly tightened the margins (mb-12 -> mb-8) */}
+      <div className="w-full max-w-2xl bg-[#070b0d]/80 backdrop-blur-2xl border border-[#376E6F]/40 rounded-[2.5rem] p-8 md:p-10 shadow-[0_15px_50px_rgba(0,0,0,0.6)] flex flex-col items-center my-auto">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#376E6F] to-[#DA7B93] mb-3">
             🎙️ AI Voice Assistant
           </h2>
@@ -155,7 +157,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
           </p>
         </div>
 
-        <div className="relative flex items-center justify-center mb-12 h-36 w-36">
+        <div className="relative flex items-center justify-center mb-8 h-32 w-32">
           {micState === "listening" && (
             <div className="absolute inset-0 rounded-full border-4 border-[#DA7B93] animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite] opacity-40"></div>
           )}
@@ -172,7 +174,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
           </button>
         </div>
 
-        <div className="mb-10">
+        <div className="mb-8">
           {micState === "idle" && (
             <span className="px-5 py-2 rounded-full bg-[#1C3334] text-[#8fa9a9] text-sm font-bold tracking-widest uppercase border border-[#376E6F]/40">
               Tap to speak
@@ -195,7 +197,7 @@ const VoiceAssistantView = ({ activeFile, onBack }) => {
           )}
         </div>
 
-        <div className="w-full bg-[#070b0d] rounded-3xl p-8 h-72 overflow-y-auto flex flex-col gap-5 border-2 border-[#1C3334] shadow-inner">
+        <div className="w-full bg-[#070b0d] rounded-3xl p-6 md:p-8 h-64 overflow-y-auto flex flex-col gap-5 border-2 border-[#1C3334] shadow-inner">
           {!transcript && !aiResponse ? (
             <div className="h-full flex items-center justify-center text-[#8fa9a9] text-sm font-medium tracking-wide">
               Your conversation will appear here...
